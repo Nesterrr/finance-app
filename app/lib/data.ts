@@ -8,6 +8,7 @@ import {
   Revenue,
 } from './definitions';
 import { formatCurrency } from './utils';
+import { cacheTag } from 'next/cache'
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
@@ -135,6 +136,9 @@ export async function fetchInvoicesPages(query: string) {
 }
 
 export async function fetchInvoiceById(id: string) {
+  'use cache';
+  cacheTag(`invoice-${id}`);
+
   try {
     const data = await sql<InvoiceForm[]>`
       SELECT
