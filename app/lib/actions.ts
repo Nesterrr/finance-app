@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { revalidatePath, updateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
 import postgres from 'postgres';
+import { signIn } from '@/auth';
+import { AuthError } from 'next-auth';
 
 export type State = {
     errors?: {
@@ -105,4 +107,24 @@ export async function updateInvoice(id: string, prevState: State, formData: Form
 export async function deleteInvoice(id: string) {
     await sql`DELETE FROM invoices WHERE id = ${id}`;
     revalidatePath('/dashboard/invoices');
+}
+
+export async function authenticate(
+  prevState: string | undefined,
+  formData: FormData,
+) {
+  try {
+    console.log('authenticate formData: ', formData)
+    await signIn('credentials', formData);
+  } catch (error) {
+    if (error instanceof AuthError) {
+      switch (error.type) {
+        case 'CredentialsSignin':
+          return 'Invalid credentials.';
+        default:
+          return 'Something went wrong.';
+      }
+    }
+    throw error;
+  }
 }
